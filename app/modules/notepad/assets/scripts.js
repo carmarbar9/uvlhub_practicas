@@ -5,3 +5,4 @@ console.log("Hi, I am a script loaded from notepad module");
 #4
 #5
 #6
+#7
