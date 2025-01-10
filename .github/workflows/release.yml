@@ -2,6 +2,8 @@ name: Generate Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - '*'
 
