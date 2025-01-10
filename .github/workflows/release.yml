@@ -1,0 +1,54 @@
+name: Generate Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Extract the tag name from the GitHub ref
+      - name: Extract tag name
+        id: extract_tag
+        run: |
+          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      # Step 3: Set up Git for tagging and changelog
+      - name: Set up Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      # Step 4: Generate a changelog
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          git log --oneline --pretty=format:"* %s" $(git describe --tags --abbrev=0)..HEAD > changelog.txt
+
+      # Step 5: Delete existing release if it exists (to avoid conflicts)
+      - name: Delete existing release (if any)
+        run: |
+          gh release delete ${{ env.TAG_NAME }} -y || echo "Release does not exist"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 6: Create a GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: Release ${{ env.TAG_NAME }}
+          body_path: changelog.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
